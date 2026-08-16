@@ -36,11 +36,13 @@ class VL53L0XSensorUsermod : public Usermod {
     // config
     uint16_t checkIntervalMs = 200; // how often to read the sensor
     String namePrefix = "vl53l0x";  // sensor name becomes "<prefix>_distance"
+    uint8_t priority = 100;         // getValue() selection priority - lower wins among sensors of the same SensorType (see sensor_bus.h)
 
     static const char _name[];
     static const char _enabled[];
     static const char _checkInterval[];
     static const char _namePrefix[];
+    static const char _priority[];
 
     bool beginSensor() {
       sensor.setBus(&Wire);
@@ -52,7 +54,7 @@ class VL53L0XSensorUsermod : public Usermod {
 
     void registerSensors() {
       if (!hub || distHandle != SENSOR_HANDLE_INVALID) return; // already registered
-      distHandle = hub->registerSensor((namePrefix + "_distance").c_str(), SensorType::Distance, nullptr, nullptr, 0);
+      distHandle = hub->registerSensor((namePrefix + "_distance").c_str(), SensorType::Distance, nullptr, nullptr, 0, priority);
     }
 
   public:
@@ -103,6 +105,7 @@ class VL53L0XSensorUsermod : public Usermod {
       top[FPSTR(_enabled)] = enabled;
       top[FPSTR(_checkInterval)] = checkIntervalMs;
       top[FPSTR(_namePrefix)] = namePrefix;
+      top[FPSTR(_priority)] = priority;
     }
 
     bool readFromConfig(JsonObject& root) override {
@@ -111,12 +114,14 @@ class VL53L0XSensorUsermod : public Usermod {
       configComplete &= getJsonValue(top[FPSTR(_enabled)], enabled);
       configComplete &= getJsonValue(top[FPSTR(_checkInterval)], checkIntervalMs);
       configComplete &= getJsonValue(top[FPSTR(_namePrefix)], namePrefix);
+      configComplete &= getJsonValue(top[FPSTR(_priority)], priority);
       return configComplete;
     }
 
     void appendConfigData(Print& settingsScript) override {
       settingsScript.print(F("addInfo('VL53L0XSensor:checkInterval',1,'milliseconds between sensor reads');"));
       settingsScript.print(F("addInfo('VL53L0XSensor:namePrefix',1,'sensor name becomes &lt;prefix&gt;_distance - must be unique across all sensor providers');"));
+      settingsScript.print(F("addInfo('VL53L0XSensor:priority',1,'getValue() selection priority - lower wins if another provider also registers a Distance sensor');"));
     }
 };
 
@@ -124,6 +129,7 @@ const char VL53L0XSensorUsermod::_name[]          PROGMEM = "VL53L0XSensor";
 const char VL53L0XSensorUsermod::_enabled[]       PROGMEM = "enabled";
 const char VL53L0XSensorUsermod::_checkInterval[] PROGMEM = "checkInterval";
 const char VL53L0XSensorUsermod::_namePrefix[]    PROGMEM = "namePrefix";
+const char VL53L0XSensorUsermod::_priority[]      PROGMEM = "priority";
 
 static VL53L0XSensorUsermod vl53l0x_sensor;
 REGISTER_USERMOD(vl53l0x_sensor);
