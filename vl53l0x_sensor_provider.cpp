@@ -19,6 +19,9 @@
  * usermod only needs to confirm the pins are set, then use the shared Wire
  * bus. It must NOT call Wire.begin() itself.
  */
+
+REGISTER_SENSOR_SLOT(_slotDistance, "_distance", SensorTypes::Distance, 0, 100);
+
 class VL53L0XSensorUsermod : public Usermod {
   private:
     VL53L0X sensor;
@@ -54,7 +57,7 @@ class VL53L0XSensorUsermod : public Usermod {
 
     void registerSensors() {
       if (!hub || distHandle != SENSOR_HANDLE_INVALID) return; // already registered
-      distHandle = hub->registerSensor((namePrefix + "_distance").c_str(), SensorType::Distance, nullptr, nullptr, 0, priority);
+      distHandle = hub->attachSensor(&_slotDistance, namePrefix.c_str(), 0, priority);
     }
 
   public:
